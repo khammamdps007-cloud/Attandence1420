@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indofast Attendance Report</title>
+<style>
+:root{
+  --navy:#0b3b63; --navy2:#062b49; --blue:#eaf4ff; --line:#c9dced;
+  --green:#159447; --text:#10253d; --muted:#60758a; --white:#fff; --danger:#d93025;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef3f7;color:var(--text)}
+.app{max-width:1100px;margin:auto;background:#fff;min-height:100vh}
+.header{background:linear-gradient(100deg,#08345a,#0e4775);color:#fff;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;gap:20px}
+.brand{font-size:28px;font-weight:900;letter-spacing:-1px}.brand span{color:#a8d52d}
+.title{font-size:28px;font-weight:800}.supervisor{text-align:right;font-size:14px;line-height:1.5}.supervisor b{font-size:16px}
+.controls{padding:14px 18px;background:#fff;border-bottom:1px solid var(--line)}
+.toprow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.datebox{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#f8fbfe;font-weight:700}
+.tabs{display:flex;flex:1;min-width:320px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tab{flex:1;border:0;padding:13px;background:#f3f7fb;color:#24435f;font-weight:800;cursor:pointer}
+.tab.active{background:#159447;color:#fff}
+.actionbar{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{font:inherit}
+.btn{border:1px solid #b8cfe2;background:#fff;color:#163b59;border-radius:7px;padding:9px 13px;font-weight:700;cursor:pointer}
+.btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn.green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.danger{background:#fff1f0;color:var(--danger);border-color:#f1b6b1}
+.report{padding:18px}
+.reporthead{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px;gap:10px}
+.reporthead h2{margin:0;font-size:22px}.reporthead small{color:var(--muted)}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:9px}
+table{border-collapse:collapse;width:100%;min-width:880px}
+th{background:var(--navy);color:#fff;padding:11px 10px;text-align:left;font-size:12px}
+td{padding:10px;border-top:1px solid var(--line);vertical-align:middle;font-size:13px}
+tr:nth-child(even){background:#f8fbfd}
+.status{display:inline-block;background:#d9f5e4;color:#08763a;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:900}
+.edit{border:1px solid #b8cfe2;background:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-weight:700}
+.empty{color:#8999a8}
+.footer{margin:0 18px 18px;background:var(--navy2);color:#fff;border-radius:9px;padding:18px;display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:18px}
+.stat{border-right:1px solid #52718d}.stat:last-child{border:0}.stat small{opacity:.8}.stat strong{display:block;font-size:27px;margin:3px 0}
+.note{font-size:12px;line-height:1.5}
+.modalbg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}
+.modal{background:#fff;border-radius:12px;width:min(520px,100%);padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h3{margin:0 0 14px}.field{margin:10px 0}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:5px;color:#36536d}
+select,input{width:100%;padding:10px;border:1px solid #c4d5e3;border-radius:7px;background:#fff;font-size:14px}
+.modalactions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.search{margin:12px 0}.search input{max-width:360px}
+@media(max-width:700px){
+ .header{padding:18px;align-items:flex-start}.brand{font-size:22px}.title{font-size:20px}.supervisor{font-size:12px}
+ .footer{grid-template-columns:1fr}.stat{border-right:0;border-bottom:1px solid #52718d;padding-bottom:10px}
+ .report{padding:12px}.controls{padding:12px}.tabs{min-width:100%}
+}
+@media print{
+ body{background:#fff}.header{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .controls,.actionbar,.search,.editcol,.modalbg{display:none!important}
+ .report{padding:0}.footer{margin:12px 0}.tablewrap{border:0}
+ th{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div>
+      <div class="brand">INDO<span>FAST</span></div>
+      <div class="title">ATTENDANCE REPORT</div>
+    </div>
+    <div class="supervisor">Supervisor<br><b>K.NISHWANTH</b><br>(9000261420)</div>
+  </header>
+
+  <section class="controls">
+    <div class="toprow">
+      <div class="datebox">DATE: <span id="dateIST"></span> (IST)</div>
+      <div class="tabs">
+        <button class="tab active" data-shift="1">1ST SHIFT (6 AM – 2 PM)</button>
+        <button class="tab" data-shift="2">2ND SHIFT (2 PM – 10 PM)</button>
+      </div>
+    </div>
+    <div class="actionbar">
+      <button class="btn primary" onclick="openModal()">＋ Add / Reassign Operator</button>
+      <button class="btn" onclick="window.print()">🖨 Print</button>
+      <button class="btn" onclick="copyReport()">Copy Report</button>
+      <button class="btn danger" onclick="resetData()">Reset Changes</button>
+    </div>
+  </section>
+
+  <main class="report">
+    <div class="reporthead">
+      <div><h2 id="shiftHeading">1ST SHIFT OPERATORS</h2><small>DATE – according to Indian Standard Time</small></div>
+    </div>
+    <div class="search"><input id="search" placeholder="Search location, station ID or operator..." oninput="render()"></div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>LOCATION</th><th>STATION ID'S</th><th>OPERATOR NAME</th><th>OPERATOR CONTACT</th><th>IFE STATUS</th><th class="editcol">ACTION</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="stat"><small>Total Locations</small><strong id="locationCount">22</strong><small>With stations</small></div>
+    <div class="stat"><small>Total Stations</small><strong id="stationCount">67</strong><small>Across all locations</small></div>
+    <div class="note"><b>Note</b><br>• Use the 2nd Shift tab for afternoon attendance.<br>• Edit any row to move an operator from one site to another.<br>• All times are shown in IST.<br>• Changes are saved in this browser.</div>
+  </footer>
+</div>
+
+<div class="modalbg" id="modalbg">
+  <div class="modal">
+    <h3 id="modalTitle">Edit Operator / Reassign</h3>
+    <div class="field"><label>LOCATION</label><select id="location"></select></div>
+    <div class="field"><label>OPERATOR NAME</label><select id="operator"><option value="">Select operator</option></select></div>
+    
+    <div class="field"><label>OPERATOR CONTACT</label><input id="contact" placeholder="Enter contact number"></div>
+    <div class="field"><label>IFE STATUS</label><select id="status"><option>WORKING</option><option>NOT WORKING</option><option>ON LEAVE</option><option>NOT ASSIGNED</option></select></div>
+    <div class="modalactions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn green" onclick="saveAssignment()">Update</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const sites = [['Vanasthalipuram / Gowthami Nagar', '871, 839, 874, 840'], ['Felvil', '1014, 1016'], ['Chinthalkunta', '829, 833, 852'], ['Saroor Nagar Thunderplus', '2202, 2279'], ['Saroor Nagar Hub', '1164, 449, 1159, 2067'], ['Dabeerpura', '580'], ['Sagar X Road', '2268, 2313, 2314'], ['Necklace Road', '758, 678, 677, 674'], ['James Street', '628, 636'], ['Sanjeevaih Park', '1001, 1002, 1003, 1005'], ['Shah Filling Station', '586'], ['Falaknama', '2106'], ['Huppuguda', '2064'], ['Mehdipatnam', '2028'], ['Bharati Fuels', '2295, 2293, 2304'], ['Attapur', '2249, 2242'], ['Karwan', '585'], ['Amar Service Station - Asif Nagar', '1074, 1076'], ['Khairatabad', '668, 665'], ['Lakdikapool', '642, 644, 657, 815'], ['Adhoc Ashok Service Station - Banjara Hills', '2274, 2276, 2287'], ['Rasoolpura Thunder Plus', '2200, 2193']];
+const operators = {'Sathwik': '+916305013426', 'Yantris': '+917981007077', 'Vamshi': '+918143422245', 'Rakesh': '+916304457938', 'Naresh': '+919390332071', 'Ganesh': '+917842127639', 'Sai nadh': '+916302362839', 'Akhil': '+919391706547', 'Bhargav': '+919390667643', 'Pranay': '+919121982383', 'Santhosh': '+919381702560', 'Manohar': '+919014700810', 'Vishnu': '+919182357879', 'Anil': '7569753402', 'Arun': '+919182831335', 'Sai naidu': '+919885027249', 'Shahbaz': '+916281008569', 'Praveen': '+917901064843', 'Aravind': '+917416125765', 'Sujith': '+916309775083', 'Nicky': '+919848907156', 'Hema sai': '+919603710899', 'Srikanth': '+919182958807'};
+const shift1 = ['Sathwik', 'Yantris', 'Yantris', 'Vamshi', 'Vamshi', 'Vamshi', 'Yantris', 'Rakesh', 'Naresh', 'Naresh', 'Ganesh', 'Ganesh', 'Ganesh', 'Sai nadh', 'Sai nadh', 'Sai nadh', 'Akhil', 'Akhil', 'Bhargav', 'Pranay', 'Santhosh', 'Manohar'];
+const shift2 = ['Vishnu', 'Anil', 'Anil', 'Arun', 'Arun', 'Arun', 'Anil', 'Rakesh', 'Sai naidu', 'Sai naidu', 'Shahbaz', 'Shahbaz', 'Shahbaz', 'Praveen', 'Praveen', 'Praveen', 'Aravind', 'Aravind', 'Sujith', 'Nicky', 'Hema sai', 'Srikanth'];
+
+let shift=1,editIndex=null; const key="indofast_attendance_v2";
+function base(){const make=a=>sites.map((x,i)=>({location:x[0],stations:x[1],operator:a[i],contact:operators[a[i]]||"",status:"WORKING"}));return {1:make(shift1),2:make(shift2)}}
+let data=JSON.parse(localStorage.getItem(key)||"null")||base();
+function save(){localStorage.setItem(key,JSON.stringify(data))}
+function istDate(){return new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Kolkata",day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date())}
+document.getElementById("dateIST").textContent=istDate();
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{shift=+b.dataset.shift;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.getElementById("shiftHeading").textContent=shift===1?"1ST SHIFT OPERATORS":"2ND SHIFT OPERATORS";render()});
+function render(){let q=document.getElementById("search").value.toLowerCase();let rows=data[shift].filter(x=>(x.location+" "+x.stations+" "+x.operator+" "+x.contact).toLowerCase().includes(q));document.getElementById("tbody").innerHTML=rows.map(r=>{let i=data[shift].indexOf(r);return `<tr><td>${i+1}</td><td><b>${r.location}</b></td><td>${r.stations}</td><td>${r.operator}</td><td>${r.contact||"-"}</td><td><span class="status ${r.status!=="WORKING"?"nonworking":""}">${r.status}</span></td><td class="editcol"><button class="edit" onclick="openModal(${i})">✎ Assign</button></td></tr>`}).join("")||`<tr><td colspan="7" class="empty">No matching records.</td></tr>`}
+function fillLists(){document.getElementById("location").innerHTML=sites.map((x,i)=>`<option value="${i}">${x[0]} • ${x[1]}</option>`).join("");document.getElementById("operator").innerHTML=`<option value="">Select operator</option>`+Object.keys(operators).sort().map(n=>`<option value="${n}">${n} • ${operators[n]}</option>`).join("")}
+function openModal(i=null){editIndex=i;fillLists();let r=i===null?null:data[shift][i];document.getElementById("modalTitle").textContent=i===null?"Assign Operator":"Reassign Operator";document.getElementById("location").value=i===null?"0":sites.findIndex(x=>x[0]===r.location);document.getElementById("operator").value=i===null?"":(operators[r.operator]!==undefined?r.operator:"");document.getElementById("contact").value=i===null?"":r.contact;document.getElementById("status").value=i===null?"WORKING":r.status;document.getElementById("modalbg").style.display="flex"}
+function closeModal(){document.getElementById("modalbg").style.display="none"}
+document.getElementById("operator").addEventListener("change",()=>{let n=document.getElementById("operator").value;document.getElementById("contact").value=operators[n]||"";if(n)document.getElementById("status").value="WORKING"});
+function saveAssignment(){let li=+document.getElementById("location").value,s=sites[li],n=document.getElementById("operator").value,o={location:s[0],stations:s[1],operator:n||"NOT ASSIGNED",contact:n?(operators[n]||""):"",status:document.getElementById("status").value};if(editIndex===null)data[shift].push(o);else data[shift][editIndex]=o;save();closeModal();render()}
+function resetData(){if(confirm("Reset both shifts to the supplied operator list?")){localStorage.removeItem(key);data=base();save();render()}}
+function copyReport(){let o=`ATTENDANCE REPORT\n\n${shift===1?"1ST SHIFT OPERATORS":"2ND SHIFT OPERATORS"}\n\nDATE - ${istDate()} (IST)\nSUPERVISOR- K.NISHWANTH(9000261420)\n\n`;data[shift].forEach(r=>o+=`LOCATION : ${r.location}\nSTATION ID'S : ${r.stations}\nOPERATOR NAME : ${r.operator}\nOPERATOR CONTACT : ${r.contact}\nIFE STATUS - ${r.status}\n\n`);navigator.clipboard.writeText(o).then(()=>alert("Attendance report copied."))}
+render();
+</script>
+</body>
+</html>
